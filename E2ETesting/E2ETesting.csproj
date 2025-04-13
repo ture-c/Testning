@@ -28,7 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\TicTacToe\TicTacToe.csproj" />
+      <ProjectReference Include="..\..\BudgetApp-master\BudgetApp.csproj" />
     </ItemGroup>
 
     <ItemGroup>
