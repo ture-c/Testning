@@ -1,0 +1,416 @@
+﻿@page
+@model BudgetApp.Pages.MainpageModel
+@{
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BudgetHelper</title>
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    <style>
+        /* Reset & Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            padding-bottom: 40px;
+        }
+        /* Navigation Bar */
+        .navbar {
+            width: 100%;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        /* Main Container */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 40px auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+        /* Box Styling for Forms */
+        .box {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            flex: 1 1 300px;
+            max-width: 450px;
+        }
+
+        form h2 {
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 2px solid #e2e2e2;
+            padding-bottom: 10px;
+        }
+
+        form label {
+            display: block;
+            margin: 15px 0 5px;
+            font-weight: bold;
+        }
+
+        form input[type="number"],
+        form input[type="text"],
+        form select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        form button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+        form button:hover {
+            opacity: 0.9;
+        }
+        /* Summary Section */
+        .summary {
+            width: 90%;
+            max-width: 1200px;
+            background: #4a6cf7;
+            color: #fff;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px auto;
+            font-size: 18px;
+        }
+        /* Expenses List */
+        .expenses-list {
+            width: 90%;
+            max-width: 1200px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px auto;
+        }
+
+            .expenses-list h2 {
+                margin-bottom: 20px;
+                font-size: 22px;
+                text-align: center;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid #f2f2f2;
+        }
+
+        th {
+            background: #f9f9f9;
+        }
+
+        .icons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+            .icons i {
+                cursor: pointer;
+                font-size: 20px;
+                transition: color 0.3s;
+            }
+
+                .icons i:hover {
+                    color: #dc3545;
+                }
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            margin-top: 40px;
+        }
+
+        /* Justera storleken på loggan */
+        .logo {
+            width: 100px; /* Minska bredden */
+            height: auto; /* Behåll proportionerna */
+        }
+
+        /* Container för loggan */
+        .main-container {
+            display: flex;
+            justify-content: center; /* Horisontellt centrera */
+            align-items: center; /* Vertikalt centrera */
+            height: 10vh; /* Full höjd på skärmen */
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="main-container">
+    <img src="~/images/logo.png" alt="BudgetWise Logo" class="logo">
+    </div>
+
+        <div class="container">
+        <!-- Budget Setup Form -->
+        <div class="box">
+            <form method="post" asp-page-handler="SetBudget">
+                <h2>Budget</h2>
+                <label for="budget">Budget</label>
+                <input type="number" placeholder="Enter Budget" asp-for="Budget" id="budget" name="budget" required>
+                <button type="submit" class="btn-primary">Set Budget</button>
+            </form>
+
+            <!-- Knapp för att radera budget & alla expenses -->
+            <form method="post" asp-page-handler="DeleteAll" onsubmit="return confirm('Are you sure you want to delete all budget and expenses?');">
+                <button type="submit" class="btn-danger">Delete Budget & Expenses</button>
+            </form>
+        </div>
+    
+
+        <div class="box">
+            @if (Model.EditExpense != null && Model.EditExpense.Id > 0)
+            {
+                <!-- EDIT FORM -->
+                <form method="post">
+                    <h2>Edit Expense</h2>
+
+                    <!-- Dold input för att hålla reda på vilken expense vi redigerar -->
+                    <input type="hidden" asp-for="EditExpense.Id" />
+
+                    <label for="editExpenseName">Expense Title</label>
+                    <input type="text" asp-for="EditExpense.Name" placeholder="Enter Title Of Product" required>
+
+                    <label for="editExpenseAmount">Amount</label>
+                    <input type="number" asp-for="EditExpense.Amount" placeholder="Enter Cost Of Product" required>
+
+                    <label for="editExpenseCategory">Category</label>
+                    <select asp-for="EditExpense.CategoryId" required>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+
+                    <button type="submit" asp-page-handler="UpdateExpense" class="btn-primary">Update Expense</button>
+                </form>
+            }
+            else
+            {
+                <!-- ADD FORM -->
+                <form method="post">
+                    <h2>Add Expense</h2>
+
+                    <label for="expenseName">Expense Title</label>
+                    <input type="text" id="expenseName" name="expenseName" placeholder="Enter Title Of Product" required>
+
+                    <label for="expenseAmount">Amount</label>
+                    <input type="number" id="expenseAmount" name="expenseAmount" placeholder="Enter Cost Of Product" required>
+
+                    <label for="expenseCategory">Category</label>
+                    <select id="expenseCategory" name="expenseCategory" required>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+
+                    <button type="submit" asp-page-handler="AddExpense" class="btn-primary">Add Expense</button>
+                </form>
+            }
+        </div>
+
+
+    <!-- Summary Section: Displays Budget, Total Expenses, and Calculated Balance -->
+    <div class="summary">
+        <div>Total Budget: @Model.Budget</div>
+        <div>Expenses: @Model.TotalExpenses</div>
+        <div>Balance: @(Model.Budget - Model.TotalExpenses)</div>
+    </div>
+
+    <!-- Expenses Table: Lists all expenses with their details -->
+    <div class="expenses-list">
+        <h2>Expenses List</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Amount</th>
+                @* <th>Date</th> *@
+                <th>Actions</th>
+            </tr>
+            @if (Model.Expenses != null && Model.Expenses.Count > 0)
+            {
+                foreach (var expense in Model.Expenses)
+                {
+                    <tr>
+                        <td>@expense.Name</td>
+                        <td>@expense.Category.Name</td>
+                        <td>@expense.Amount kr</td>
+                        @* <td>@expense.Date.ToShortDateString()</td> *@
+                        <td class="icons">
+                            <a asp-page="/Mainpage" asp-page-handler="EditExpense" asp-route-expenseId="@expense.Id"> <!-- Edit knappen-->
+                                <i class='bx bx-edit'></i>
+                            </a>
+
+                            <form method="post" asp-page-handler="DeleteExpense" asp-route-expenseId="@expense.Id" onsubmit="return confirm('Are you sure?');">
+                                <button type="submit" class="btn-danger">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </form>
+
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5">No expenses added yet.</td>
+                </tr>
+            }
+
+        </table>
+    </div>
+        <!-- Category Expenses -->
+        <div class="expenses-list">
+            <h2>Expenses by Category</h2>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Total Amount</th>
+                    <th>Percentage of Budget</th>
+                </tr>
+                @{
+                    var categoryExpenses = Model.GetExpensesByCategory();
+                    foreach (var category in categoryExpenses)
+                    {
+                        var percentage = Model.Budget > 0 ? (category.Value / Model.Budget * 100).ToString("0.0") : "0";
+                        <tr>
+                            <td>@category.Key</td>
+                            <td>@category.Value kr</td>
+                            <td>@percentage%</td>
+                        </tr>
+                    }
+                }
+            </table>
+        </div>
+
+        <!-- Pie Chart för Budget -->
+        <div class="chart-container" style="width: 50%; margin: auto; padding-top: 40px;">
+            <h2 style="text-align: center;"></h2>
+            <canvas id="budgetChart"></canvas>
+        </div>
+
+
+        <script>
+            document.addEventListener("DOMContentLoaded", async function () {
+                console.log("Pie Chart laddas...");
+
+                // Hämta data från backend 
+                async function fetchBudgetData() {
+                    try {
+                        const response = await fetch('/api/budget');
+                        if (!response.ok) {
+                            throw new Error("Could not fetch budget data");
+                        }
+                        return await response.json();
+                    } catch (error) {
+                        console.error("Error fetching budget data:", error);
+                        return { categories: [], totalBudget: 0 };
+                    }
+                }
+
+                
+                async function createChart() {
+                    const data = await fetchBudgetData();
+                    const categories = data.categories;
+                    const totalBudget = data.totalBudget;
+
+					// Extrahera labels och amounts från kategorierna
+                    const labels = categories.map(category => category.name);
+                    const amounts = categories.map(category => category.amount);
+                    const remainingBudget = totalBudget - amounts.reduce((a, b) => a + b, 0);
+
+					// Skapa pie chart
+                    const ctx = document.getElementById('budgetChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: [...labels, 'Remaining Budget'], // Budget label
+                            datasets: [{
+                                data: [...amounts, remainingBudget], // Budget amounts
+                                backgroundColor: [
+                                    '#ff6384', '#36a2eb', '#ffcd56', '#4bc0c0', '#9966ff' // Färger
+                                ],
+                                borderColor: [
+                                    '#ff3b60', '#2a82c8', '#ffb347', '#4fbfbf', '#8f5fff' // Border color
+                                ],
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' },
+                                title: { display: true, text: 'Budget' }
+                            }
+                        }
+                    });
+
+                    console.log("Pie chart skapad!");
+                }
+
+                createChart();
+            });
+        </script>
+
+
+
+</body>
+</html>
